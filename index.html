@@ -6,117 +6,390 @@
   <title>じゃんけん</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: sans-serif;
-      background: #f0f4ff;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      color: white;
     }
+
     .container {
-      background: white;
-      border-radius: 16px;
-      padding: 40px;
+      width: 420px;
+      padding: 40px 32px;
       text-align: center;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-      width: 360px;
     }
-    h1 { font-size: 28px; margin-bottom: 32px; }
-    .hands {
+
+    h1 {
+      font-size: 32px;
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #e94560, #f5a623);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 36px;
+      letter-spacing: 1px;
+    }
+
+    .scoreboard {
       display: flex;
       justify-content: space-around;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 16px;
       margin-bottom: 32px;
     }
-    .hand-btn {
-      font-size: 48px;
-      background: none;
-      border: 3px solid #ddd;
-      border-radius: 12px;
-      width: 90px;
-      height: 90px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .hand-btn:hover {
-      border-color: #6c8fff;
-      background: #f0f4ff;
-      transform: scale(1.1);
-    }
-    .battle {
-      font-size: 64px;
+    .score-item .label { font-size: 11px; color: #aaa; letter-spacing: 1px; }
+    .score-item .value { font-size: 28px; font-weight: bold; margin-top: 4px; }
+    .score-item.win  .value { color: #2ecc71; }
+    .score-item.lose .value { color: #e74c3c; }
+    .score-item.draw .value { color: #f39c12; }
+
+    .battle-area {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 16px;
-      min-height: 80px;
+      min-height: 130px;
     }
-    .result {
+
+    .fighter { width: 130px; text-align: center; }
+    .fighter .name { font-size: 12px; color: #aaa; letter-spacing: 2px; margin-bottom: 10px; }
+    .fighter .hand { font-size: 70px; line-height: 1; transition: transform 0.3s; }
+    .fighter.you .hand { transform: scaleX(-1); }
+
+    /* CPUが後出し思考中 */
+    .fighter .hand.thinking {
+      animation: spin 0.4s linear infinite;
+      filter: blur(2px);
+    }
+    @keyframes spin {
+      0%   { content: '✊'; }
+      33%  { content: '✌️'; }
+      66%  { content: '🖐️'; }
+      100% { content: '✊'; }
+    }
+
+    .cpu-tag {
+      font-size: 11px;
+      margin-top: 6px;
+      min-height: 18px;
+      color: #f5a623;
+      letter-spacing: 1px;
+    }
+
+    .vs { font-size: 22px; font-weight: bold; color: #e94560; letter-spacing: 2px; }
+
+    .result-banner {
+      min-height: 48px;
       font-size: 24px;
       font-weight: bold;
-      margin-bottom: 24px;
-      min-height: 36px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+      line-height: 1.4;
     }
-    .result.win  { color: #2ecc71; }
-    .result.lose { color: #e74c3c; }
-    .result.draw { color: #f39c12; }
-    .score {
+    .result-banner.win  { color: #2ecc71; }
+    .result-banner.lose { color: #e74c3c; }
+    .result-banner.draw { color: #f39c12; }
+
+    .choices {
       display: flex;
-      justify-content: space-around;
-      background: #f8f9ff;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 14px;
-      color: #555;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 20px;
     }
-    .score span { font-size: 22px; font-weight: bold; color: #333; display: block; }
+
+    .choice-btn {
+      width: 90px;
+      height: 90px;
+      font-size: 44px;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .choice-btn:hover:not(:disabled) {
+      background: rgba(233,69,96,0.2);
+      border-color: #e94560;
+      transform: translateY(-4px);
+    }
+    .choice-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+    .choice-btn.selected {
+      background: rgba(233,69,96,0.3);
+      border-color: #e94560;
+      transform: translateY(-4px);
+    }
+
+    .late-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #f5a623, #e94560);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+    .late-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-2px); }
+    .late-btn:disabled { opacity: 0.2; cursor: not-allowed; transform: none; }
+
+    .reset-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #aaa;
+      padding: 10px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .reset-btn:hover { border-color: white; color: white; }
+
+    .hint { font-size: 12px; color: #666; margin-top: 10px; }
+
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pop { animation: pop 0.35s ease-out; }
+    .you .hand.pop { animation: pop-flip 0.35s ease-out; }
+    @keyframes pop-flip {
+      0% { transform: scaleX(-1) scale(0.5); opacity: 0; }
+      70% { transform: scaleX(-1) scale(1.15); }
+      100% { transform: scaleX(-1) scale(1); opacity: 1; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>じゃんけん ✊</h1>
-    <div class="hands">
-      <button class="hand-btn" onclick="play('rock')"    title="グー">✊</button>
-      <button class="hand-btn" onclick="play('scissors')" title="チョキ">✌️</button>
-      <button class="hand-btn" onclick="play('paper')"   title="パー">🖐️</button>
+<div class="container">
+  <h1>じゃんけん</h1>
+  <p class="subtitle">お互い後出し1回あり・心理戦モード</p>
+
+  <div class="scoreboard">
+    <div class="score-item win">
+      <div class="label">WIN</div>
+      <div class="value" id="s-win">0</div>
     </div>
-    <div class="battle" id="battle">　</div>
-    <div class="result" id="result">上のボタンを押してね！</div>
-    <div class="score">
-      <div>勝ち<span id="win">0</span></div>
-      <div>負け<span id="lose">0</span></div>
-      <div>引き分け<span id="draw">0</span></div>
+    <div class="score-item draw">
+      <div class="label">DRAW</div>
+      <div class="value" id="s-draw">0</div>
+    </div>
+    <div class="score-item lose">
+      <div class="label">LOSE</div>
+      <div class="value" id="s-lose">0</div>
     </div>
   </div>
 
-  <script>
-    const emoji = { rock: '✊', scissors: '✌️', paper: '🖐️' };
-    const label = { rock: 'グー', scissors: 'チョキ', paper: 'パー' };
-    const beats = { rock: 'scissors', scissors: 'paper', paper: 'rock' };
-    const score = { win: 0, lose: 0, draw: 0 };
+  <div class="battle-area">
+    <div class="fighter you">
+      <div class="name">YOU</div>
+      <div class="hand" id="you-hand">🤜</div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="fighter cpu">
+      <div class="name">CPU</div>
+      <div class="hand" id="cpu-hand">🤛</div>
+      <div class="cpu-tag" id="cpu-tag"></div>
+    </div>
+  </div>
 
-    function play(player) {
-      const choices = ['rock', 'scissors', 'paper'];
-      const cpu = choices[Math.floor(Math.random() * 3)];
+  <div class="result-banner" id="result">グー・チョキ・パーを選んでね</div>
 
-      document.getElementById('battle').textContent = emoji[player] + '  vs  ' + emoji[cpu];
+  <div class="choices">
+    <button class="choice-btn" id="btn-rock"     onclick="play('rock')">✊</button>
+    <button class="choice-btn" id="btn-scissors" onclick="play('scissors')">✌️</button>
+    <button class="choice-btn" id="btn-paper"    onclick="play('paper')">🖐️</button>
+  </div>
 
-      const resultEl = document.getElementById('result');
-      if (player === cpu) {
-        resultEl.textContent = '引き分け！';
-        resultEl.className = 'result draw';
-        score.draw++;
-      } else if (beats[player] === cpu) {
-        resultEl.textContent = 'あなたの勝ち！ 🎉';
-        resultEl.className = 'result win';
-        score.win++;
-      } else {
-        resultEl.textContent = 'あなたの負け… 😢';
-        resultEl.className = 'result lose';
-        score.lose++;
-      }
+  <button class="late-btn" id="late-btn" disabled onclick="activateLate()">
+    ⚡ 後出しする！
+  </button>
 
-      document.getElementById('win').textContent  = score.win;
-      document.getElementById('lose').textContent = score.lose;
-      document.getElementById('draw').textContent = score.draw;
+  <button class="reset-btn" onclick="resetScore()">スコアリセット</button>
+  <p class="hint" id="hint">手を選んでスタート</p>
+</div>
+
+<script>
+  const emoji = { rock: '✊', scissors: '✌️', paper: '🖐️' };
+  const beats = { rock: 'scissors', scissors: 'paper', paper: 'rock' };
+  const score = { win: 0, lose: 0, draw: 0 };
+
+  let cpuChoice = null;
+  let myChoice  = null;
+  let lateUsed  = false;
+  let phase     = 'choose'; // 'choose' | 'lateReady' | 'done'
+
+  // CPUの後出し戦略：プレイヤーの現在の手を読んで対抗する確率
+  // 70%の確率でプレイヤーの手に勝つ手に変える、30%で完全ランダム
+  function cpuLateChoice(playerCurrentHand) {
+    const hands = ['rock', 'scissors', 'paper'];
+    if (Math.random() < 0.7) {
+      // プレイヤーの手に勝つ手を選ぶ（裏の裏を読む）
+      return hands.find(h => beats[h] === playerCurrentHand);
+    } else {
+      return hands[Math.floor(Math.random() * 3)];
     }
-  </script>
+  }
+
+  function play(hand) {
+    if (phase === 'done') return;
+
+    // --- 後出しで選び直し ---
+    if (phase === 'lateReady') {
+      myChoice = hand;
+      highlightBtn(hand);
+      const youEl = document.getElementById('you-hand');
+      youEl.textContent = emoji[hand];
+      youEl.classList.add('pop');
+      setTimeout(() => youEl.classList.remove('pop'), 400);
+
+      // CPUの手を後出しで変更 → 少し遅らせて公開
+      const newCpu = cpuLateChoice(hand);
+      const cpuEl  = document.getElementById('cpu-hand');
+      const cpuTag = document.getElementById('cpu-tag');
+
+      cpuEl.classList.add('thinking');
+      cpuTag.textContent = '考え中…';
+      enableChoices(false);
+
+      setTimeout(() => {
+        cpuEl.classList.remove('thinking');
+        if (newCpu !== cpuChoice) {
+          cpuChoice = newCpu;
+          cpuEl.textContent = emoji[cpuChoice];
+          cpuEl.classList.add('pop');
+          cpuTag.textContent = '後出し！';
+          setTimeout(() => cpuEl.classList.remove('pop'), 400);
+        } else {
+          cpuTag.textContent = '変えなかった';
+        }
+        setTimeout(judge, 500);
+      }, 900);
+      return;
+    }
+
+    // --- 通常の選択 ---
+    myChoice  = hand;
+    cpuChoice = ['rock', 'scissors', 'paper'][Math.floor(Math.random() * 3)];
+
+    highlightBtn(hand);
+    document.getElementById('you-hand').textContent = emoji[hand];
+    document.getElementById('cpu-hand').textContent = emoji[cpuChoice];
+    document.getElementById('you-hand').classList.add('pop');
+    document.getElementById('cpu-hand').classList.add('pop');
+    document.getElementById('cpu-tag').textContent = '';
+    setTimeout(() => {
+      document.getElementById('you-hand').classList.remove('pop');
+      document.getElementById('cpu-hand').classList.remove('pop');
+    }, 400);
+
+    const outcome = getOutcome(hand, cpuChoice);
+
+    if (outcome === 'lose' && !lateUsed) {
+      phase = 'lateReady';
+      document.getElementById('result').textContent = '負けてる… 後出ししますか？';
+      document.getElementById('result').className = 'result-banner lose';
+      document.getElementById('late-btn').disabled = false;
+      document.getElementById('hint').textContent = '後出しするとCPUも対抗してくる！';
+      enableChoices(true);
+    } else {
+      judge();
+    }
+  }
+
+  function activateLate() {
+    lateUsed = true;
+    document.getElementById('late-btn').disabled = true;
+    document.getElementById('result').textContent = '手を選び直して！\nCPUも読みを変えてくるぞ…';
+    document.getElementById('result').className = 'result-banner draw';
+    document.getElementById('hint').textContent = 'CPUは70%の確率で対抗してくる';
+    enableChoices(true);
+  }
+
+  function judge() {
+    phase = 'done';
+    document.getElementById('late-btn').disabled = true;
+    enableChoices(false);
+
+    const outcome = getOutcome(myChoice, cpuChoice);
+    score[outcome]++;
+    document.getElementById('s-win').textContent  = score.win;
+    document.getElementById('s-draw').textContent = score.draw;
+    document.getElementById('s-lose').textContent = score.lose;
+
+    const resultEl = document.getElementById('result');
+    if (outcome === 'win') {
+      resultEl.textContent = lateUsed ? '後出し成功！読み勝ち 🎉' : '勝ち！ 🎉';
+      resultEl.className = 'result-banner win';
+    } else if (outcome === 'lose') {
+      resultEl.textContent = lateUsed ? 'CPUに読まれた… 😱' : '負け… 😢';
+      resultEl.className = 'result-banner lose';
+    } else {
+      resultEl.textContent = '引き分け！ 🤝';
+      resultEl.className = 'result-banner draw';
+    }
+
+    document.getElementById('hint').textContent = 'もう一度遊ぶには手を選んでね';
+    setTimeout(resetRound, 2500);
+  }
+
+  function getOutcome(me, cpu) {
+    if (me === cpu) return 'draw';
+    return beats[me] === cpu ? 'win' : 'lose';
+  }
+
+  function highlightBtn(hand) {
+    ['rock', 'scissors', 'paper'].forEach(h =>
+      document.getElementById('btn-' + h).classList.toggle('selected', h === hand));
+  }
+
+  function enableChoices(enabled) {
+    ['rock', 'scissors', 'paper'].forEach(h =>
+      document.getElementById('btn-' + h).disabled = !enabled);
+  }
+
+  function resetRound() {
+    phase = 'choose';
+    lateUsed = false;
+    myChoice = cpuChoice = null;
+    document.getElementById('you-hand').textContent = '🤜';
+    document.getElementById('cpu-hand').textContent = '🤛';
+    document.getElementById('cpu-tag').textContent  = '';
+    document.getElementById('result').textContent   = 'グー・チョキ・パーを選んでね';
+    document.getElementById('result').className     = 'result-banner';
+    document.getElementById('hint').textContent     = '手を選んでスタート';
+    document.getElementById('late-btn').disabled    = true;
+    enableChoices(true);
+    ['rock', 'scissors', 'paper'].forEach(h =>
+      document.getElementById('btn-' + h).classList.remove('selected'));
+  }
+
+  function resetScore() {
+    score.win = score.lose = score.draw = 0;
+    document.getElementById('s-win').textContent  = 0;
+    document.getElementById('s-draw').textContent = 0;
+    document.getElementById('s-lose').textContent = 0;
+    resetRound();
+  }
+</script>
 </body>
 </html>
